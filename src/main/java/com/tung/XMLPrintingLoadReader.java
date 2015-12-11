@@ -34,10 +34,10 @@ public class XMLPrintingLoadReader implements ItemReader<List<File>> {
         synchronized (this) {
             readMethodInvocationCount++;
         }
-        logger.info("Thread " + Thread.currentThread().getName() + " is invoking method read() of com.tung.XMLPrintingLoadReader[" + instanceId + "] " + readMethodInvocationCount + " times.");
+        logger.info("Thread " + Thread.currentThread().getName() + " is invoking method read() " +
+                "of com.tung.XMLPrintingLoadReader[" + instanceId + "] " + readMethodInvocationCount + " times.");
         List<File> fileList = new ArrayList<File>();
         for (Map.Entry<String, String> entry : chunk.entrySet()) {
-//            logger.info("Thread " + Thread.currentThread().getName() + " is adding file " + entry.getValue() + " to process...");
             File file = new File(entry.getValue());
             fileList.add(file);
         }

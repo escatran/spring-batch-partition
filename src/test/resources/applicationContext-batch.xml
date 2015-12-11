@@ -48,7 +48,7 @@
 
     <batch:step id="slaveStep">
         <batch:tasklet transaction-manager="transactionManager">
-            <batch:chunk reader="xmlLoadReader" processor="xmlProcessor" writer="xmlWriter" commit-interval="5"/>
+            <batch:chunk reader="xmlLoadReader" processor="xmlProcessor" writer="xmlWriter" commit-interval="1"/>
         </batch:tasklet>
     </batch:step>
 

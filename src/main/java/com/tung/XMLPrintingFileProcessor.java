@@ -19,7 +19,7 @@ public class XMLPrintingFileProcessor implements ItemProcessor<List<File>, List<
     @Override
     public List<File> process(List<File> xmlFiles) throws Exception {
         logger.info("Processing these files: " + xmlFiles);
-        return null;
+        return xmlFiles;
     }
 
 }
