@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+    <Appenders>
+        <RollingFile name="RollingFile" fileName="spring-batch-partition-test.log"
+                     filePattern="spring-batch-partition-test-%d{yyyy-MM-dd}-%i.log" >
+            <PatternLayout>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss} [TransId: %X{transId}] %-5p %c{1}:%L - %m%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="30 MB" />
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [TransId: %X{transId}] %-5p %c{1}:%L - %m%n" />
+        </Console>
+    </Appenders>
+    <Loggers>
+        <!--<Logger name="root" level="debug" additivity="false">-->
+        <!--<appender-ref ref="RollingFile" level="debug"/>-->
+        <!--<appender-ref ref="Console" level="debug"/>-->
+        <!--</Logger>-->
+        <logger name="org.hibernate" level="INFO"/>
+        <logger name="org.springframework" level="INFO"/>
+        <Root level="all" additivity="false">
+            <AppenderRef ref="Console" level="INFO"/>
+            <AppenderRef ref="RollingFile"/>
+        </Root>
+    </Loggers>
+</Configuration>

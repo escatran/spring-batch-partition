@@ -1,0 +1,114 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jee="http://www.springframework.org/schema/jee"
+       xmlns:batch="http://www.springframework.org/schema/batch"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context-4.0.xsd
+	http://www.springframework.org/schema/batch
+	http://www.springframework.org/schema/batch/spring-batch-3.0.xsd
+	http://www.springframework.org/schema/task
+    http://www.springframework.org/schema/task/spring-task-4.0.xsd
+    http://www.springframework.org/schema/jdbc
+    http://www.springframework.org/schema/jdbc/spring-jdbc-4.0.xsd">
+
+
+    <!--<bean id="dataSource"-->
+          <!--class="org.springframework.jdbc.datasource.DriverManagerDataSource">-->
+        <!--<property name="driverClassName" value="com.mysql.jdbc.Driver" />-->
+        <!--<property name="url" value="jdbc:mysql://10.142.38.13:3306/batch_schema" />-->
+        <!--<property name="username" value="root" />-->
+        <!--<property name="password" value="abc@122" />-->
+    <!--</bean>-->
+    <jdbc:embedded-database id="dataSource" type="DERBY">
+        <jdbc:script location="file:src/test/resources/db/sql/create-db-derby.sql" />
+    </jdbc:embedded-database>
+
+    <bean id="filePartitioner" class="com.tung.FilePartitioner" scope="step">
+        <property name="xmlFolderLocation" value="target\test-classes\data\XML_FILES"/>
+        <property name="filePerThread" value="2"/>
+    </bean>
+
+    <bean id="xmlLoadReader" scope="step" class="com.tung.XMLPrintingLoadReader">
+        <property name="chunk" value="#{stepExecutionContext['chunk']}"/>
+    </bean>
+    <bean id="xmlProcessor" scope="step" class="com.tung.XMLPrintingFileProcessor"/>
+    <bean id="xmlWriter" scope="step" class="com.tung.XMLPrintingWriter"/>
+
+    <bean id="xmlLoadTaskExecutor"
+          class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+        <property name="corePoolSize" value="5" />
+        <property name="maxPoolSize" value="5" />
+    </bean>
+
+    <batch:step id="slaveStep">
+        <batch:tasklet transaction-manager="transactionManager">
+            <batch:chunk reader="xmlLoadReader" processor="xmlProcessor" writer="xmlWriter" commit-interval="5"/>
+        </batch:tasklet>
+    </batch:step>
+
+    <batch:job id="xmlLoader">
+        <batch:step id="master">
+            <batch:partition step="slaveStep" partitioner="filePartitioner">
+                <batch:handler grid-size="2" task-executor="xmlLoadTaskExecutor"/>
+            </batch:partition>
+        </batch:step>
+    </batch:job>
+
+
+    <bean id="transactionManager"
+          class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />
+
+    <!-- stored job-meta in database -->
+    <bean id="jobRepository"
+          class="org.springframework.batch.core.repository.support.JobRepositoryFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <property name="databaseType" value="derby" />
+        <property name="transactionManager" ref="transactionManager"/>
+    </bean>
+
+
+    <bean id="syncJobLauncher"
+          class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+        <property name="jobRepository" ref="jobRepository"/>
+    </bean>
+
+    <bean id="jobLauncher"
+          class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+        <property name="jobRepository" ref="jobRepository" />
+        <!--this property makes job launching is asynchronous-->
+        <!--<property name="taskExecutor">-->
+        <!--<bean class="org.springframework.core.task.SimpleAsyncTaskExecutor"/>-->
+        <!--</property>-->
+    </bean>
+
+
+    <bean id="jobExplorer" class="org.springframework.batch.core.explore.support.JobExplorerFactoryBean"
+          p:dataSource-ref="dataSource"/>
+
+    <bean id="jobRegistry" class="org.springframework.batch.core.configuration.support.MapJobRegistry"/>
+
+    <bean id="jobRegistryBeanPostProcessor"
+          class="org.springframework.batch.core.configuration.support.JobRegistryBeanPostProcessor">
+        <property name="jobRegistry" ref="jobRegistry"/>
+    </bean>
+
+    <bean id="jobOperator" class="org.springframework.batch.core.launch.support.SimpleJobOperator">
+        <property name="jobLauncher" ref="jobLauncher"/>
+        <property name="jobRepository" ref="jobRepository"/>
+        <property name="jobExplorer" ref="jobExplorer"/>
+        <property name="jobRegistry" ref="jobRegistry"/>
+    </bean>
+
+    <bean id="syncJobOperator" class="org.springframework.batch.core.launch.support.SimpleJobOperator">
+        <property name="jobLauncher" ref="syncJobLauncher"/>
+        <property name="jobRepository" ref="jobRepository"/>
+        <property name="jobExplorer" ref="jobExplorer"/>
+        <property name="jobRegistry" ref="jobRegistry"/>
+    </bean>
+</beans>
