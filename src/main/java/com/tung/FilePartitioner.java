@@ -56,7 +56,7 @@ public class FilePartitioner implements Partitioner {
     }
 
     public void setXmlFolderLocation(String xmlFolderLocation) {
-        this.xmlFolderLocation = xmlFolderLocation;
+        this.xmlFolderLocation = xmlFolderLocation.replace("\\", File.separator);
     }
 
     public int getFilePerThread() {
